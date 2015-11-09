@@ -111,44 +111,9 @@ CKEDITOR.scriptLoader = ( function() {
 					if ( waitingInfo.length > 1 )
 						return;
 
-					// Create the <script> element.
-					//var script = new CKEDITOR.dom.element( 'script' );
-					//script.setAttributes( {
-					//	type: 'text/javascript',
-					//	src: url
-					//} );
-                    //
-					//if ( callback ) {
-					//	if ( CKEDITOR.env.ie && CKEDITOR.env.version < 11 ) {
-					//		// FIXME: For IE, we are not able to return false on error (like 404).
-					//		script.$.onreadystatechange = function() {
-					//			if ( script.$.readyState == 'loaded' || script.$.readyState == 'complete' ) {
-					//				script.$.onreadystatechange = null;
-					//				onLoad( url, true );
-					//			}
-					//		};
-					//	} else {
-					//		script.$.onload = function() {
-					//			// Some browsers, such as Safari, may call the onLoad function
-					//			// immediately. Which will break the loading sequence. (#3661)
-					//			setTimeout( function() {
-					//				onLoad( url, true );
-					//			}, 0 );
-					//		};
-                    //
-					//		// FIXME: Opera and Safari will not fire onerror.
-					//		script.$.onerror = function() {
-					//			onLoad( url, false );
-					//		};
-					//	}
-					//}
-                    //
-					//// Append it to <head>.
-					//script.appendTo( CKEDITOR.document.getHead() );
-
 					var newUrl = './' + url.replace(CKEDITOR.basePath, '').split('?')[0];
 					(function() {
-						console.log('new url: ', newUrl);
+						console.log('[CkEditor try load script from webpack] url: ', newUrl);
 						if (window.CkEditorWebpackContext.keys().indexOf(newUrl) > -1) {
 							window.CkEditorWebpackContext.require(newUrl);
 							if ( callback ) {
@@ -157,11 +122,41 @@ CKEDITOR.scriptLoader = ( function() {
 								}, 0 );
 							}
 						} else {
+							console.log('[CkEditor script not found in webpack, append to head \<script\>] url: ', url);
+							// Create the <script> element.
+							var script = new CKEDITOR.dom.element( 'script' );
+							script.setAttributes( {
+								type: 'text/javascript',
+								src: url
+							} );
+
 							if ( callback ) {
-								setTimeout( function() {
-									onLoad( url, false );
-								}, 0 );
+								if ( CKEDITOR.env.ie && CKEDITOR.env.version < 11 ) {
+									// FIXME: For IE, we are not able to return false on error (like 404).
+									script.$.onreadystatechange = function() {
+										if ( script.$.readyState == 'loaded' || script.$.readyState == 'complete' ) {
+											script.$.onreadystatechange = null;
+											onLoad( url, true );
+										}
+									};
+								} else {
+									script.$.onload = function() {
+										// Some browsers, such as Safari, may call the onLoad function
+										// immediately. Which will break the loading sequence. (#3661)
+										setTimeout( function() {
+											onLoad( url, true );
+										}, 0 );
+									};
+
+									// FIXME: Opera and Safari will not fire onerror.
+									script.$.onerror = function() {
+										onLoad( url, false );
+									};
+								}
 							}
+
+							// Append it to <head>.
+							script.appendTo( CKEDITOR.document.getHead() );
 						}
 					})();
 
